@@ -1,0 +1,563 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<style>[hidden]{display:none!important} img{max-width:100%} body{margin:0}</style>
+<title>Clare Bear's Missing Card</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shrikhand&family=Rethink+Sans:wght@400;500;700&family=Space+Mono:wght@400;700&family=Caveat:wght@500;700&display=swap">
+<style>
+/* Layout: one centred "case file" column, one lock on screen at a time, padlock tracker across the top. Single night theme by choice. */
+:root {
+  --night: #1d1224;
+  --night-2: #2a1a33;
+  --night-3: #3a2445;
+  --ink: #f6ecf3;
+  --muted: #bfa7c4;
+  --pink: #ff6fae;
+  --pink-deep: #d9468a;
+  --gold: #f4c64f;
+  --paper: #fbf5ee;
+  --paper-ink: #2b1d30;
+  --good: #7fe0a8;
+  --font-display: "Shrikhand", "Georgia", serif;
+  --font-body: "Rethink Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Space Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --font-hand: "Caveat", "Comic Sans MS", cursive;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { min-height: 100%; }
+body {
+  background:
+    radial-gradient(1200px 600px at 50% -10%, var(--night-3), transparent 70%),
+    var(--night);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.55;
+  padding-inline: 16px;
+  padding-block: 24px 48px;
+}
+.wrap { max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+
+/* tracker */
+.tracker { display: flex; justify-content: center; gap: 14px; }
+.pad { width: 34px; height: 40px; color: var(--muted); opacity: .55; transition: color .3s, opacity .3s, transform .3s; }
+.pad.current { color: var(--gold); opacity: 1; transform: translateY(-2px); }
+.pad.open { color: var(--pink); opacity: 1; }
+.pad .shackle { transition: transform .4s cubic-bezier(.3,1.6,.5,1); transform-origin: 30% 100%; }
+.pad.open .shackle { transform: translate(6px,-5px) rotate(18deg); }
+
+.eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); }
+h1, h2 { font-family: var(--font-display); font-weight: 400; line-height: 1.05; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(2.4rem, 9vw, 3.8rem); color: var(--pink); }
+h2 { font-size: clamp(1.8rem, 6.5vw, 2.5rem); color: var(--ink); }
+p { margin: 0; max-width: 60ch; }
+.lede { color: var(--muted); font-size: 1.05rem; }
+
+.stage { display: flex; flex-direction: column; gap: 18px; animation: rise .5s ease both; }
+@keyframes rise { from { opacity: .001; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+.btn {
+  appearance: none; border: 0; cursor: pointer;
+  font: 700 1rem/1 var(--font-body);
+  padding: 14px 22px; border-radius: 999px;
+  background: var(--pink); color: var(--night);
+  box-shadow: 0 4px 0 var(--pink-deep);
+  transition: transform .1s, box-shadow .1s;
+  align-self: flex-start;
+}
+.btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--pink-deep); }
+.btn:focus-visible, .ghost:focus-visible, .tile:focus-visible, .mcard:focus-visible, .wheel button:focus-visible, input:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+.ghost {
+  appearance: none; background: transparent; cursor: pointer;
+  border: 1.5px solid var(--night-3); color: var(--muted);
+  font: 500 .92rem/1 var(--font-body); padding: 10px 16px; border-radius: 999px;
+}
+.ghost:hover { border-color: var(--muted); color: var(--ink); }
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.hintbox { background: var(--night-2); border-left: 3px solid var(--gold); padding: 12px 14px; border-radius: 4px 10px 10px 4px; color: var(--ink); font-size: .95rem; }
+.status { font-family: var(--font-mono); font-size: .85rem; color: var(--muted); min-height: 1.4em; }
+.status.ok { color: var(--good); }
+.status.no { color: var(--pink); }
+
+/* intro */
+.envelope-art { width: min(260px, 70%); align-self: center; margin-block: 8px; }
+.case { font-family: var(--font-mono); font-size: .85rem; color: var(--muted); display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; background: var(--night-2); padding: 14px 16px; border-radius: 10px; }
+.case dt { color: var(--gold); }
+.case dd { margin: 0; color: var(--ink); }
+
+/* lock 1: memory */
+.memory { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+@media (max-width: 480px) { .memory { grid-template-columns: repeat(3, 1fr); } }
+.mcard { position: relative; aspect-ratio: 3/4; perspective: 800px; border: 0; padding: 0; background: none; cursor: pointer; }
+.mcard .inner { position: absolute; inset: 0; transition: transform .45s; transform-style: preserve-3d; }
+.mcard.up .inner, .mcard.done .inner { transform: rotateY(180deg); }
+.mcard .face { position: absolute; inset: 0; border-radius: 10px; backface-visibility: hidden; -webkit-backface-visibility: hidden; overflow: hidden; }
+.mcard .back { background: var(--night-3); display: grid; place-items: center; border: 2px solid var(--night-2);
+  background-image: repeating-linear-gradient(45deg, transparent 0 8px, rgba(255,111,174,.08) 8px 16px); }
+.mcard .back span { font-family: var(--font-display); color: var(--pink); font-size: 1.5rem; }
+.mcard .front { transform: rotateY(180deg); background: var(--paper); padding: 5px; }
+.mcard .front img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; display: block; }
+.mcard.done .front { box-shadow: 0 0 0 3px var(--good); }
+
+/* lock 2: slider */
+.slider { position: relative; width: min(100%, 360px); aspect-ratio: 3/4; align-self: center; background: var(--night-2); border-radius: 12px; overflow: hidden; touch-action: manipulation; }
+.tile { position: absolute; width: calc(100% / 3); height: calc(100% / 3); border: 0; padding: 0; cursor: pointer;
+  background-image: url("img/matildas.jpg"); background-size: 300% 300%;
+  box-shadow: inset 0 0 0 1px rgba(29,18,36,.6); transition: left .15s ease, top .15s ease; }
+.slider.solved .tile { box-shadow: none; cursor: default; }
+.peek { width: min(100%, 200px); border-radius: 8px; align-self: center; border: 4px solid var(--paper); }
+
+/* lock 3: dial */
+.clue-photo { width: min(100%, 300px); align-self: center; background: var(--paper); padding: 8px 8px 34px; border-radius: 4px; transform: rotate(-2deg); box-shadow: 0 12px 30px rgba(0,0,0,.4); position: relative; }
+.clue-photo img { display: block; width: 100%; aspect-ratio: 3/4; object-fit: cover; }
+.clue-photo figcaption { position: absolute; left: 0; right: 0; bottom: 4px; text-align: center; font-family: var(--font-hand); font-size: 1.35rem; color: var(--paper-ink); }
+.dial { display: flex; justify-content: center; gap: 10px; align-items: center; background: var(--night-2); padding: 16px; border-radius: 14px; align-self: center; }
+.wheel { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.wheel button { appearance: none; border: 0; background: var(--night-3); color: var(--ink); width: 48px; height: 34px; border-radius: 8px; cursor: pointer; font-size: 1rem; }
+.wheel output { font-family: var(--font-mono); font-weight: 700; font-size: 2rem; width: 48px; text-align: center; background: var(--night); border-radius: 8px; padding: 6px 0; color: var(--gold); font-variant-numeric: tabular-nums; }
+.dial .sep { font-family: var(--font-mono); font-size: 1.8rem; color: var(--muted); }
+.shake { animation: shake .4s; }
+@keyframes shake { 20%,60% { transform: translateX(-8px); } 40%,80% { transform: translateX(8px); } }
+
+/* lock 4: riddle */
+.blurry { filter: blur(14px) saturate(1.4); transition: filter .8s; }
+.blurry.clear { filter: none; }
+.riddle { font-family: var(--font-hand); font-size: 1.6rem; line-height: 1.25; color: var(--ink); text-align: center; text-wrap: balance; }
+.answer { display: flex; gap: 10px; flex-wrap: wrap; }
+.answer input { flex: 1 1 200px; min-width: 0; font: 500 1.1rem var(--font-mono); padding: 13px 16px; border-radius: 12px; border: 2px solid var(--night-3); background: var(--night-2); color: var(--ink); letter-spacing: .06em; }
+.answer input::placeholder { color: var(--muted); opacity: .7; }
+
+/* finale */
+.envelope { position: relative; width: min(100%, 420px); aspect-ratio: 3/2; align-self: center; cursor: pointer; border: 0; background: none; padding: 0; }
+.envelope .body { position: absolute; inset: 0; background: var(--pink); border-radius: 8px; box-shadow: 0 18px 40px rgba(0,0,0,.45); }
+.envelope .flap { position: absolute; inset: 0 0 35% 0; background: var(--pink-deep); clip-path: polygon(0 0, 100% 0, 50% 100%); transform-origin: top; transition: transform .6s; border-radius: 8px 8px 0 0; }
+.envelope .seal { position: absolute; left: 50%; top: 58%; transform: translate(-50%,-50%); width: 64px; height: 64px; border-radius: 50%; background: var(--gold); display: grid; place-items: center; font-family: var(--font-display); color: var(--night); font-size: 1.3rem; box-shadow: 0 3px 0 #c99a2a; }
+.envelope .tap { position: absolute; left: 0; right: 0; bottom: 10px; text-align: center; font-family: var(--font-mono); font-size: .8rem; color: var(--night); letter-spacing: .12em; text-transform: uppercase; }
+.envelope.opened .flap { transform: rotateX(180deg); }
+
+.card { background: var(--paper); color: var(--paper-ink); border-radius: 6px; padding: clamp(22px, 6vw, 40px); box-shadow: 0 20px 50px rgba(0,0,0,.5); display: flex; flex-direction: column; gap: 16px; animation: unfold .8s cubic-bezier(.2,.9,.3,1.2) both; }
+@keyframes unfold { from { opacity: .001; transform: translateY(40px) scale(.94) rotate(-1deg); } to { opacity: 1; transform: none; } }
+.card h1 { color: var(--pink-deep); }
+.card .late { font-family: var(--font-mono); font-size: .8rem; letter-spacing: .12em; text-transform: uppercase; color: #8a6a8f; }
+.card .msg { font-family: var(--font-hand); font-size: 1.55rem; line-height: 1.3; display: flex; flex-direction: column; gap: 12px; }
+.card .msg p { max-width: none; }
+.card .sign { font-family: var(--font-hand); font-size: 1.9rem; color: var(--pink-deep); }
+
+.album { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 18px 14px; padding-block: 8px; }
+.polaroid { background: var(--paper); padding: 7px 7px 0; border-radius: 3px; box-shadow: 0 8px 20px rgba(0,0,0,.4); margin: 0; transition: transform .2s; }
+.polaroid:nth-child(odd) { transform: rotate(-2.5deg); }
+.polaroid:nth-child(even) { transform: rotate(2deg); }
+.polaroid:nth-child(3n) { transform: rotate(-1deg); }
+.polaroid:hover { transform: rotate(0) scale(1.04); }
+.polaroid img { display: block; width: 100%; aspect-ratio: 3/4; object-fit: cover; }
+.polaroid img.fit { object-fit: contain; background: #f2c94c; }
+.polaroid figcaption { font-family: var(--font-hand); color: var(--paper-ink); font-size: 1.15rem; text-align: center; padding: 4px 2px 8px; line-height: 1.1; }
+.polaroid small { display: block; font-family: var(--font-mono); font-size: .62rem; color: #8a6a8f; letter-spacing: .06em; margin-top: 2px; }
+
+#confetti { position: fixed; inset: 0; pointer-events: none; z-index: 10; }
+.foot { text-align: center; }
+.foot .ghost { font-size: .8rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+</style>
+
+</head>
+<body>
+<canvas id="confetti" aria-hidden="true"></canvas>
+<main class="wrap">
+  <nav class="tracker" id="tracker" aria-label="Locks"></nav>
+  <section id="stage" aria-live="polite"></section>
+</main>
+
+<script>
+(() => {
+  const PHOTOS = {
+    sydney:      { cap: "Sydney Harbour",       date: "Nov 2025" },
+    safari:      { cap: "South Africa",          date: "Jan 2026" },
+    cableway:    { cap: "Hartbeespoort",         date: "Jan 2026" },
+    plane:       { cap: "Long-haul face",        date: "Jan 2026" },
+    cape:        { cap: "Windswept on the cape", date: "Jan 2026" },
+    beetlejuice: { cap: "Beetlejuice night",     date: "Jun 2026" },
+    dinner:      { cap: "Dinner, mid-bite",      date: "Sep 2026" },
+    b2b:         { cap: "Bridge to Brisbane",    date: "Sep 2026" },
+    nap:         { cap: "Post-run recovery",     date: "Sep 2026" },
+    matildas:    { cap: "Matildas at Suncorp",   date: "Sep 2026" },
+    "table-frame":      { cap: "Table Mountain, Cape Town", date: "Jan 2026" },
+    "table-top":        { cap: "On top of Table Mountain",  date: "Jan 2026" },
+    "lions-head":       { cap: "The Lion's Head climb",     date: "Jan 2026" },
+    "wine-tram":        { cap: "Franschhoek Wine Tram",     date: "Jan 2026" },
+    anniversary:        { cap: "Happy anniversary (or not)", date: "" },
+    country:            { cap: "Aura farming on a farm",    date: "" },
+    comedy:             { cap: "Elouise Eftos at the Powerhouse", date: "May 2026", fit: true },
+    netball:            { cap: "Firebirds courtside",       date: "" },
+    "selfie-stadium":   { cap: "Up on the hill",            date: "" },
+    "sunshine-stadium": { cap: "Sunshine Coast Stadium",    date: "" },
+    garden:             { cap: "Through the arches",        date: "" },
+    rocks:              { cap: "Iced coffee on the rocks",  date: "" },
+    marg:               { cap: "Pre-show marg, comedy night", date: "May 2026" },
+  };
+  const ORDER = ["sydney","plane","safari","cableway","table-frame","table-top","lions-head","cape","wine-tram","anniversary","country","marg","comedy","netball","beetlejuice","selfie-stadium","sunshine-stadium","garden","rocks","dinner","b2b","nap","matildas"];
+
+  const stageEl = document.getElementById("stage");
+  const trackerEl = document.getElementById("tracker");
+  const LOCKS = 4;
+  let step = 0; // 0 intro, 1-4 locks, 5 finale
+
+  const store = {
+    get() { try { return parseInt(localStorage.getItem("clarebear-step") || "0", 10) || 0; } catch { return 0; } },
+    set(v) { try { localStorage.setItem("clarebear-step", String(v)); } catch {} },
+  };
+
+  const padSVG = `<svg viewBox="0 0 34 40" fill="none" aria-hidden="true">
+    <path class="shackle" d="M9 18V11a8 8 0 0 1 16 0v7" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
+    <rect x="3" y="17" width="28" height="21" rx="5" fill="currentColor"/>
+    <circle cx="17" cy="26" r="3" fill="#1d1224"/><rect x="15.6" y="27" width="2.8" height="6" rx="1.2" fill="#1d1224"/></svg>`;
+
+  function renderTracker() {
+    trackerEl.innerHTML = "";
+    for (let i = 1; i <= LOCKS; i++) {
+      const d = document.createElement("div");
+      d.className = "pad" + (i < step || step > LOCKS ? " open" : "") + (i === step ? " current" : "");
+      d.innerHTML = padSVG;
+      d.setAttribute("aria-label", `Lock ${i}: ${i < step ? "open" : "locked"}`);
+      trackerEl.appendChild(d);
+    }
+  }
+
+  function go(n) {
+    step = n; store.set(n);
+    renderTracker();
+    stageEl.innerHTML = "";
+    const s = document.createElement("div");
+    s.className = "stage";
+    stageEl.appendChild(s);
+    [intro, lockMemory, lockSlider, lockDial, lockRiddle, finale][n](s);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function el(html) { const t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstElementChild; }
+
+  function hints(s, list) {
+    let used = 0;
+    const row = el(`<div class="row"><button class="ghost" type="button">Need a hint?</button></div>`);
+    const btn = row.querySelector("button");
+    s.appendChild(row);
+    btn.addEventListener("click", () => {
+      if (used >= list.length) return;
+      const h = list[used++];
+      if (typeof h === "function") h();
+      else row.before(el(`<div class="hintbox">${h}</div>`));
+      btn.textContent = used >= list.length ? "No more hints" : "Another hint";
+      btn.disabled = used >= list.length;
+    });
+  }
+
+  function solved(s, label, msg) {
+    const pads = trackerEl.children;
+    if (pads[step - 1]) pads[step - 1].classList.add("open");
+    const box = el(`<div class="stage">
+      <p class="status ok">${label}</p>
+      <p>${msg}</p>
+      <button class="btn" type="button">${step === LOCKS ? "Open the last door" : "Next lock"}</button></div>`);
+    box.querySelector("button").addEventListener("click", () => go(step + 1));
+    s.appendChild(box);
+    box.querySelector("button").focus({ preventScroll: true });
+    box.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
+  // ---------- intro ----------
+  function intro(s) {
+    s.append(
+      el(`<p class="eyebrow">Case file 09/10</p>`),
+      el(`<h1>Clare Bear, your card is missing.</h1>`),
+      el(`<p class="lede">It was meant to arrive on 9 October. Someone hid it behind four locks instead. Each one opens with something only you would know.</p>`),
+      el(`<dl class="case">
+        <dt>Subject</dt><dd>Clare Bear</dd>
+        <dt>Missing</dt><dd>1 birthday card</dd>
+        <dt>Last seen</dt><dd>9 Oct 2026</dd>
+        <dt>Locks</dt><dd>4, hints available</dd>
+      </dl>`),
+    );
+    const b = el(`<button class="btn" type="button">Start the search</button>`);
+    b.addEventListener("click", () => go(1));
+    s.appendChild(b);
+  }
+
+  // ---------- lock 1: memory match ----------
+  function lockMemory(s) {
+    s.append(
+      el(`<p class="eyebrow">Lock 1 of 4</p>`),
+      el(`<h2>Match the memories</h2>`),
+      el(`<p class="lede">Twelve photos, six pairs. Flip two at a time.</p>`),
+    );
+    const picks = ["sydney","beetlejuice","matildas","cableway","plane","dinner"];
+    const deck = shuffle([...picks, ...picks]);
+    const grid = el(`<div class="memory"></div>`);
+    const status = el(`<p class="status">0 of 6 pairs</p>`);
+    let open = [], found = 0, busy = false;
+    deck.forEach((k, i) => {
+      const c = el(`<button class="mcard" type="button" aria-label="Card ${i + 1}">
+        <div class="inner"><div class="face back"><span>CB</span></div>
+        <div class="face front"><img src="img/${k}.jpg" alt="${PHOTOS[k].cap}" loading="eager"></div></div></button>`);
+      c.dataset.k = k;
+      c.addEventListener("click", () => {
+        if (busy || c.classList.contains("up") || c.classList.contains("done")) return;
+        c.classList.add("up"); open.push(c);
+        if (open.length === 2) {
+          busy = true;
+          const [a, b] = open;
+          if (a.dataset.k === b.dataset.k) {
+            setTimeout(() => {
+              a.classList.replace("up", "done"); b.classList.replace("up", "done");
+              a.disabled = b.disabled = true;
+              open = []; busy = false; found++;
+              status.textContent = `${found} of 6 pairs · ${PHOTOS[a.dataset.k].cap}`;
+              if (found === 6) { status.classList.add("ok"); solved(s, "Lock 1 open", "Good memory. The next lock is a little more scrambled."); }
+            }, 350);
+          } else {
+            setTimeout(() => { a.classList.remove("up"); b.classList.remove("up"); open = []; busy = false; }, 850);
+          }
+        }
+      });
+      grid.appendChild(c);
+    });
+    s.append(grid, status);
+    hints(s, [
+      "Take it slow. Flip one you know, then hunt for its twin.",
+      () => {
+        grid.querySelectorAll(".mcard:not(.done)").forEach(c => c.classList.add("up"));
+        busy = true;
+        setTimeout(() => { grid.querySelectorAll(".mcard:not(.done)").forEach(c => c.classList.remove("up")); open = []; busy = false; }, 1600);
+      },
+    ]);
+  }
+
+  // ---------- lock 2: sliding puzzle ----------
+  function lockSlider(s) {
+    s.append(
+      el(`<p class="eyebrow">Lock 2 of 4</p>`),
+      el(`<h2>Put the night back together</h2>`),
+      el(`<p class="lede">Slide the tiles into the gap until the photo is whole. Tap a tile next to the gap to move it.</p>`),
+    );
+    const N = 3;
+    const box = el(`<div class="slider" role="group" aria-label="Sliding puzzle"></div>`);
+    const status = el(`<p class="status">0 moves</p>`);
+    // state[pos] = tile id (0..7), 8 = blank
+    let state = [...Array(N * N).keys()];
+    let blank = N * N - 1;
+    const nbrs = p => { const r = Math.floor(p / N), c = p % N, out = []; if (r) out.push(p - N); if (r < N - 1) out.push(p + N); if (c) out.push(p - 1); if (c < N - 1) out.push(p + 1); return out; };
+    let prev = -1;
+    for (let i = 0; i < 160; i++) {
+      const opts = nbrs(blank).filter(p => p !== prev);
+      const p = opts[Math.floor(Math.random() * opts.length)];
+      [state[blank], state[p]] = [state[p], state[blank]]; prev = blank; blank = p;
+    }
+    if (state.every((t, i) => t === i)) { const p = nbrs(blank)[0]; [state[blank], state[p]] = [state[p], state[blank]]; blank = p; }
+
+    const tiles = [];
+    for (let t = 0; t < N * N - 1; t++) {
+      const b = el(`<button class="tile" type="button" aria-label="Tile ${t + 1}"></button>`);
+      b.style.backgroundPosition = `${(t % N) * 50}% ${Math.floor(t / N) * 50}%`;
+      b.addEventListener("click", () => move(state.indexOf(t)));
+      tiles[t] = b; box.appendChild(b);
+    }
+    let moves = 0, done = false;
+    function layout() {
+      state.forEach((t, p) => { if (t < N * N - 1) { tiles[t].style.left = `${(p % N) * 100 / N}%`; tiles[t].style.top = `${Math.floor(p / N) * 100 / N}%`; } });
+    }
+    function move(p) {
+      if (done || !nbrs(blank).includes(p)) return;
+      [state[blank], state[p]] = [state[p], state[blank]]; blank = p; moves++;
+      layout(); status.textContent = `${moves} moves`;
+      if (state.every((t, i) => t === i)) finish();
+    }
+    function finish() {
+      done = true; box.classList.add("solved");
+      const last = el(`<div class="tile" style="left:66.666%;top:66.666%;background-position:100% 100%;"></div>`);
+      box.appendChild(last);
+      status.classList.add("ok");
+      solved(s, `Lock 2 open · ${moves} moves`, "Matildas at Suncorp, 29 September. Loudest night of the year.");
+    }
+    function autoSolve() {
+      // solve with BFS from current state (3x3 is small enough)
+      const key = a => a.join(",");
+      const goal = key([...Array(N * N).keys()]);
+      const startS = state.slice(); const seen = new Map([[key(startS), null]]); const q = [startS]; let found = null;
+      while (q.length) {
+        const cur = q.shift(); const k = key(cur);
+        if (k === goal) { found = k; break; }
+        const b = cur.indexOf(N * N - 1);
+        for (const p of nbrs(b)) { const nx = cur.slice(); [nx[b], nx[p]] = [nx[p], nx[b]]; const nk = key(nx); if (!seen.has(nk)) { seen.set(nk, [k, p]); q.push(nx); } }
+      }
+      const path = []; let k = found; while (seen.get(k)) { const [pk, p] = seen.get(k); path.unshift(p); k = pk; }
+      let i = 0; const tick = () => { if (i < path.length && !done) { move(path[i++]); setTimeout(tick, 180); } }; tick();
+    }
+    layout();
+    s.append(box, status);
+    hints(s, [
+      () => { const peek = el(`<img class="peek" src="img/matildas.jpg" alt="The finished photo">`); box.after(peek); },
+      "Solve the top row first, then the left column. The last four tiles are easier than they look.",
+      () => { autoSolve(); },
+    ]);
+  }
+
+  // ---------- lock 3: date dial ----------
+  function lockDial(s) {
+    s.append(
+      el(`<p class="eyebrow">Lock 3 of 4</p>`),
+      el(`<h2>The early train</h2>`),
+      el(`<p class="lede">We were squashed onto this train first thing in the morning. What was the date? Enter it as day then month.</p>`),
+      el(`<figure class="clue-photo"><img src="img/b2b.jpg" alt="Selfie on a crowded train in race shirts"><figcaption>where were we off to?</figcaption></figure>`),
+    );
+    const vals = [0, 0, 0, 0];
+    const dial = el(`<div class="dial" role="group" aria-label="Four-digit date lock"></div>`);
+    vals.forEach((_, i) => {
+      if (i === 2) dial.appendChild(el(`<span class="sep" aria-hidden="true">/</span>`));
+      const w = el(`<div class="wheel">
+        <button type="button" aria-label="Digit ${i + 1} up">&#9650;</button>
+        <output aria-live="off">0</output>
+        <button type="button" aria-label="Digit ${i + 1} down">&#9660;</button></div>`);
+      const out = w.querySelector("output");
+      const [up, down] = w.querySelectorAll("button");
+      up.addEventListener("click", () => { vals[i] = (vals[i] + 1) % 10; out.textContent = vals[i]; });
+      down.addEventListener("click", () => { vals[i] = (vals[i] + 9) % 10; out.textContent = vals[i]; });
+      dial.appendChild(w);
+    });
+    const status = el(`<p class="status">DD / MM</p>`);
+    const tryBtn = el(`<button class="btn" type="button">Try the lock</button>`);
+    let done = false;
+    tryBtn.addEventListener("click", () => {
+      if (done) return;
+      const code = vals.join("");
+      if (code === "1309") {
+        done = true; tryBtn.disabled = true;
+        status.textContent = "13 / 09 · click"; status.className = "status ok";
+        solved(s, "Lock 3 open", "Bridge to Brisbane, 13 September 2026. Then straight to the couch for the nap that followed.");
+      } else {
+        status.textContent = `${code.slice(0,2)} / ${code.slice(2)} · not it`; status.className = "status no";
+        dial.classList.remove("shake"); void dial.offsetWidth; dial.classList.add("shake");
+      }
+    });
+    s.append(dial, status, tryBtn);
+    hints(s, [
+      "Look closely at the shirts. The answer is printed on them.",
+      "It was the Bridge to Brisbane. The race is in September.",
+      "The day is 13.",
+    ]);
+  }
+
+  // ---------- lock 4: riddle ----------
+  function lockRiddle(s) {
+    s.append(
+      el(`<p class="eyebrow">Lock 4 of 4</p>`),
+      el(`<h2>Say the magic word</h2>`),
+    );
+    const fig = el(`<figure class="clue-photo"><img class="blurry" src="img/beetlejuice.jpg" alt="A blurred photo from a night out"><figcaption>June 2026</figcaption></figure>`);
+    const img = fig.querySelector("img");
+    s.append(
+      fig,
+      el(`<p class="riddle">Purple lights, a striped program,<br>a ghost who shows up if you call him.<br>Say his name three times.</p>`),
+    );
+    const form = el(`<form class="answer" autocomplete="off">
+      <label for="riddle-answer" class="eyebrow" style="flex-basis:100%">Your answer</label>
+      <input id="riddle-answer" name="answer" type="text" placeholder="Type his name" autocapitalize="off" spellcheck="false">
+      <button class="btn" type="submit">Unlock</button></form>`);
+    const status = el(`<p class="status"></p>`);
+    let done = false;
+    form.addEventListener("submit", e => {
+      e.preventDefault();
+      if (done) return;
+      const v = form.answer.value.toLowerCase().replace(/[^a-z]/g, "");
+      if (/beetle|betel|bettle|beatle/.test(v) && /ju|ge|gu/.test(v)) {
+        done = true; img.classList.add("clear");
+        const times = (v.match(/(beetle|betel|bettle|beatle)/g) || []).length;
+        status.textContent = times >= 3 ? "Beetlejuice. Beetlejuice. Beetlejuice." : "Close enough. He heard you.";
+        status.className = "status ok";
+        form.querySelector("button").disabled = true;
+        solved(s, "Lock 4 open", "All four locks are off. Your card is through the last door.");
+      } else {
+        status.textContent = v ? "He did not appear. Try again." : "Type a name first.";
+        status.className = "status no";
+        form.classList.remove("shake"); void form.offsetWidth; form.classList.add("shake");
+      }
+    });
+    s.append(form, status);
+    hints(s, [
+      "It's a musical we saw together.",
+      () => { img.classList.add("clear"); },
+      "B _ _ _ _ _ J _ _ _ _  (11 letters)",
+    ]);
+  }
+
+  // ---------- finale ----------
+  function finale(s) {
+    renderTracker();
+    s.append(el(`<p class="eyebrow" style="text-align:center">Found it</p>`));
+    const env = el(`<button class="envelope" type="button" aria-label="Open the envelope">
+      <div class="body"></div><div class="flap"></div><div class="seal">CB</div><div class="tap">Tap to open</div></button>`);
+    s.appendChild(env);
+    env.addEventListener("click", () => {
+      if (env.classList.contains("opened")) return;
+      env.classList.add("opened");
+      confetti();
+      setTimeout(() => { env.remove(); showCard(s); }, 650);
+    }, { once: true });
+  }
+
+  function showCard(s) {
+    const card = el(`<article class="card">
+      <p class="late">Delivered fashionably late · 9 October</p>
+      <h1>Happy birthday, Clare Bear</h1>
+      <div class="msg">
+        <p>Sorry this one arrived a little late. I wanted to find the perfect way to share some of our memories from the past year, and choosing turned out to be much harder than I expected. We did so much together.</p>
+        <p>I hope you fall in love with these photos of you as much as I did while flicking through them.</p>
+        <p>You are an amazing, adorable and astounding person. Your smile is intoxicating, and I want to keep putting it on your face every single day. You deserve nothing less, birthday girl.</p>
+      </div>
+      <p class="sign">Love, Blake</p>
+    </article>`);
+    const album = el(`<div class="album"></div>`);
+    ORDER.forEach(k => { const p = PHOTOS[k]; album.appendChild(el(`<figure class="polaroid"><img src="img/${k}.jpg" alt="${p.cap}" loading="lazy"${p.fit ? ' class="fit"' : ''}><figcaption>${p.cap}${p.date ? `<small>${p.date}</small>` : ''}</figcaption></figure>`)); });
+    const foot = el(`<div class="foot"><button class="ghost" type="button">Play it again</button></div>`);
+    foot.querySelector("button").addEventListener("click", () => go(0));
+    s.append(card, el(`<p class="eyebrow" style="text-align:center">The year, in evidence</p>`), album, foot);
+  }
+
+  // ---------- utils ----------
+  function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+  function confetti() {
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const c = document.getElementById("confetti"), ctx = c.getContext("2d");
+    const dpr = window.devicePixelRatio || 1;
+    c.width = innerWidth * dpr; c.height = innerHeight * dpr; ctx.scale(dpr, dpr);
+    const cols = ["#ff6fae", "#f4c64f", "#fbf5ee", "#7fe0a8", "#d9468a"];
+    const bits = Array.from({ length: 160 }, () => ({
+      x: innerWidth / 2 + (Math.random() - .5) * 80, y: innerHeight * .45,
+      vx: (Math.random() - .5) * 14, vy: -Math.random() * 14 - 4,
+      r: Math.random() * Math.PI, vr: (Math.random() - .5) * .3,
+      w: 6 + Math.random() * 6, h: 3 + Math.random() * 4, c: cols[Math.floor(Math.random() * cols.length)],
+    }));
+    let t = 0;
+    (function frame() {
+      ctx.clearRect(0, 0, innerWidth, innerHeight);
+      bits.forEach(b => { b.vy += .32; b.vx *= .99; b.x += b.vx; b.y += b.vy; b.r += b.vr;
+        ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(b.r); ctx.fillStyle = b.c; ctx.fillRect(-b.w / 2, -b.h / 2, b.w, b.h); ctx.restore(); });
+      if (++t < 220) requestAnimationFrame(frame); else ctx.clearRect(0, 0, innerWidth, innerHeight);
+    })();
+  }
+
+  const saved = store.get();
+  go(saved >= 0 && saved <= 5 ? saved : 0);
+})();
+</script>
+
+</body>
+</html>
